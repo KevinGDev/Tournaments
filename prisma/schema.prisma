@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Tournament {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  date      DateTime
+  teams     Team[]
+  matches   Match[]
+}
+
+model Team {
+  id           String     @id @default(cuid())
+  name         String
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  players      Player[]
+}
+
+model Player {
+  id     String @id @default(uuid())
+  name   String
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+model Match {
+  id           String     @id @default(uuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  teamA        String
+  teamB        String
+  scoreA       Int        @default(0)
+  scoreB       Int        @default(0)
+  status       String     @default("PENDING") // PENDING, IN_PROGRESS, FINISHED
+}
