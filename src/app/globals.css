@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+:root {
+  --bg-dark: #0a0a0a;
+  --bg-panel: #141414;
+  --text-main: #f4f4f5;
+  --blood: #d97706;
+  --steel: #52525b;
+  --glow: #fbbf24;
+}
+
+[data-theme='light'] {
+  --bg-dark: #fcfcfc;
+  --bg-panel: #f1f5f9;
+  --text-main: #0f172a;
+  --blood: #475569;
+  --steel: #94a3b8;
+  --glow: #1e293b;
+}
+
+@theme {
+  --color-bg-dark: var(--bg-dark);
+  --color-bg-panel: var(--bg-panel);
+  --color-text-main: var(--text-main);
+  --color-blood: var(--blood);
+  --color-steel: var(--steel);
+  --color-glow: var(--glow);
+}
+
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+  }
+
+  body {
+    @apply text-text-main transition-colors duration-700;
+    background: linear-gradient(135deg, var(--bg-dark) 50%, var(--bg-panel) 50%);
+    background-attachment: fixed;
+  }
+}
