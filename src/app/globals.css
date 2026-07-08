@@ -1,21 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --bg-dark: #0a0a0a;
-  --bg-panel: #141414;
-  --text-main: #f4f4f5;
-  --blood: #d97706;
-  --steel: #52525b;
-  --glow: #fbbf24;
+  /* SOMBRE : DOOM CRADO (Industrial/Hellish) */
+  --bg-dark: #0f0a0a;   /* Noir bitume */
+  --bg-panel: #1a1414;  /* Gris très foncé, presque terre battue */
+  --text-main: #d1d5db; /* Gris cadavérique, moins blanc éclatant */
+  --blood: #991b1b;     /* Rouge sang coagulé, sombre et saturé */
+  --steel: #454040;     /* Acier rouillé/industriel */
+  --glow: #ef4444;      /* Alerte rouge / braise ardente */
 }
 
 [data-theme='light'] {
-  --bg-dark: #fcfcfc;
-  --bg-panel: #f1f5f9;
+  /* CLAIR : SCI-FI PROPRE (Clinique/Cyber) */
+  --bg-dark: #f8fafc;
+  --bg-panel: #e2e8f0;
   --text-main: #0f172a;
-  --blood: #475569;
-  --steel: #94a3b8;
-  --glow: #1e293b;
+  --blood: #0284c7;    /* Bleu tech froid */
+  --steel: #94a3b8;    /* Acier brossé */
+  --glow: #0ea5e9;     /* Néon azur */
 }
 
 @theme {
@@ -36,7 +38,7 @@
 
   body {
     @apply text-text-main transition-colors duration-700;
-    background: linear-gradient(135deg, var(--bg-dark) 50%, var(--bg-panel) 50%);
-    background-attachment: fixed;
+    /* On enlève le gradient trop propre, on préfère une base solide et oppressante */
+    background-color: var(--bg-dark);
   }
 }

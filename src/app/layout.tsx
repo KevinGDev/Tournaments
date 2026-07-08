@@ -2,6 +2,8 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import ThemeToggle from "@/components/Themetoggle";
+import Image from 'next/image';
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,10 +32,15 @@ export default function RootLayout({
           suppressHydrationWarning
       >
       <body className="min-h-full flex flex-col bg-bg-main text-text-main transition-colors duration-300">
-      {/* Le Toggle est maintenant disponible partout */}
-      <div className="fixed top-4 right-4 z-50">
-        <ThemeToggle />
-      </div>
+      <header className="sticky top-0 w-full p-4 border-b border-steel/20 bg-bg-panel/80 backdrop-blur-sm flex items-center justify-between z-40">
+          <a href="/" className="text-2xl font-black tracking-tighter text-blood flex items-center gap-2">
+              {/* Un petit symbole avant le nom, par exemple un icône */}
+              <span>🎮</span>
+              <span className="text-text-main">LAN<span className="text-blood">MASTER 4000</span></span>
+          </a>
+
+          <ThemeToggle />
+      </header>
 
       {/* Le contenu des pages */}
       <main className="flex-grow">

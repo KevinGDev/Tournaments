@@ -9,8 +9,8 @@ datasource db {
 model Tournament {
   id        String   @id @default(uuid())
   name      String
-  createdAt DateTime @default(now())
   date      DateTime
+  isFinished Boolean  @default(false)
   teams     Team[]
   matches   Match[]
 }

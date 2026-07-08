@@ -1,6 +1,7 @@
 'use client'
 
 import { deleteTournament } from "@/app/actions";
+import { Trash2 } from "lucide-react";
 
 export default function DeleteButton({ id }: { id: string }) {
     return (
@@ -13,8 +14,7 @@ export default function DeleteButton({ id }: { id: string }) {
                         e.preventDefault();
                     }
                 }}
-                className="text-zinc-600 hover:text-red-500 transition-colors text-[10px] uppercase tracking-widest font-bold"
-            >
+                className="flex items-center gap-2 px-3 py-2 bg-bg-dark border border-steel/30 rounded-lg hover:border-blood hover:text-blood transition-all text-sm font-bold text-steel"            >
                 Supprimer
             </button>
         </form>

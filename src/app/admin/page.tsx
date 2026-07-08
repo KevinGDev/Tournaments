@@ -1,9 +1,11 @@
 import { prisma } from "@/lib/prisma";
+import { finishTournament } from "@/app/actions"; // Assure-toi que l'action est créée
 import CreateTournamentModal from "@/components/CreateTournamentModal";
 import AddTeamForm from "@/components/AddTeamForm";
 import AddPlayerForm from "@/components/AddPlayerForm";
 import DeleteButton from "@/components/DeleteButton";
 import { Calendar, Users, Trophy } from "lucide-react";
+import EditTournamentModal from "@/components/EditTournamentModal";
 
 export default async function AdminPage() {
     const tournaments = await prisma.tournament.findMany({
@@ -16,7 +18,6 @@ export default async function AdminPage() {
     });
 
     return (
-        // Utilisation de bg-transparent pour laisser apparaître la diagonale du body
         <main className="min-h-screen p-8 text-text-main">
             {/* Header */}
             <header className="mb-12 border-b border-steel/30 pb-8">
@@ -27,7 +28,6 @@ export default async function AdminPage() {
             </header>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-
                 {/* Colonne 1 : Actions rapides */}
                 <aside className="lg:col-span-1 space-y-6">
                     <div className="bg-bg-panel p-6 rounded-2xl border border-steel/20">
@@ -50,11 +50,29 @@ export default async function AdminPage() {
                                         {t.date ? new Date(t.date).toLocaleDateString('fr-FR', { dateStyle: 'long' }) : "Date non définie"}
                                     </div>
                                 </div>
+
                                 <div className="flex flex-col items-end gap-2">
                                     <div className="bg-blood/10 text-blood px-3 py-1 rounded-full text-xs font-bold border border-blood/20">
                                         {t.teams.length} Équipes
                                     </div>
-                                    <DeleteButton id={t.id} />
+
+                                    <div className="flex gap-2">
+                                        {/* Bouton Terminer avec action serveur */}
+                                        <form action={async () => {
+                                            "use server"
+                                            await finishTournament(t.id)
+                                        }}>
+                                            <button
+                                                type="submit"
+                                                className="flex items-center gap-1 px-3 py-1 bg-green-900/20 border border-green-500/30 text-green-500 rounded text-xs font-bold hover:bg-green-900/40 transition-all"
+                                            >
+                                                <Trophy className="w-3 h-3" /> Terminer
+                                            </button>
+                                        </form>
+
+                                        <EditTournamentModal tournament={t} />
+                                        <DeleteButton id={t.id} />
+                                    </div>
                                 </div>
                             </div>
 
