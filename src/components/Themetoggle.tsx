@@ -1,31 +1,45 @@
 'use client'
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function ThemeToggle() {
-    const [theme, setTheme] = useState('');
+    // 1. Initialiser avec une valeur neutre pour éviter le mismatch
+    const [theme, setTheme] = useState<string>('dark');
+    const [mounted, setMounted] = useState(false);
 
-    // 1. Au chargement du composant, on lit la préférence sauvegardée
+    // 2. Synchroniser avec localStorage SEULEMENT après le montage
     useEffect(() => {
-        const savedTheme = localStorage.getItem('theme') || '';
+        const savedTheme = localStorage.getItem('theme') || 'dark';
         setTheme(savedTheme);
-        document.documentElement.setAttribute('data-theme', savedTheme);
+        setMounted(true);
     }, []);
 
-    // 2. Fonction pour basculer et sauvegarder
+    // 3. Appliquer le thème au DOM quand il change
+    useEffect(() => {
+        if (mounted) {
+            document.documentElement.setAttribute('data-theme', theme === 'dark' ? '' : theme);
+            localStorage.setItem('theme', theme);
+        }
+    }, [theme, mounted]);
+
     const toggleTheme = () => {
-        const newTheme = theme === 'light' ? '' : 'light';
-        setTheme(newTheme);
-        localStorage.setItem('theme', newTheme);
-        document.documentElement.setAttribute('data-theme', newTheme);
+        const nextTheme = theme === 'dark' ? 'light' : theme === 'light' ? 'magic' : 'dark';
+        setTheme(nextTheme);
+    };
+
+    // 4. Afficher un rendu cohérent le temps du montage
+    const getIcon = () => {
+        if (theme === 'light') return '☀️';
+        if (theme === 'magic') return '🔮';
+        return '🌙';
     };
 
     return (
         <button
             onClick={toggleTheme}
-            className="p-2 bg-bg-panel border border-steel/20 rounded-full hover:border-blood transition-all text-text-main"
+            className="p-3 bg-bg-panel border border-steel/20 rounded-full hover:border-blood transition-all text-xl"
         >
-            {theme === 'light' ? '🌙' : '☀️'}
+            {getIcon()}
         </button>
     );
 }

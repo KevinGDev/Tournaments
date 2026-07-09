@@ -1,25 +1,6 @@
 @import "tailwindcss";
 
-:root {
-  /* SOMBRE : DOOM CRADO (Industrial/Hellish) */
-  --bg-dark: #0f0a0a;   /* Noir bitume */
-  --bg-panel: #1a1414;  /* Gris très foncé, presque terre battue */
-  --text-main: #d1d5db; /* Gris cadavérique, moins blanc éclatant */
-  --blood: #991b1b;     /* Rouge sang coagulé, sombre et saturé */
-  --steel: #454040;     /* Acier rouillé/industriel */
-  --glow: #ef4444;      /* Alerte rouge / braise ardente */
-}
-
-[data-theme='light'] {
-  /* CLAIR : SCI-FI PROPRE (Clinique/Cyber) */
-  --bg-dark: #f8fafc;
-  --bg-panel: #e2e8f0;
-  --text-main: #0f172a;
-  --blood: #0284c7;    /* Bleu tech froid */
-  --steel: #94a3b8;    /* Acier brossé */
-  --glow: #0ea5e9;     /* Néon azur */
-}
-
+/* 1. Configuration du thème via @theme (syntaxe V4 native) */
 @theme {
   --color-bg-dark: var(--bg-dark);
   --color-bg-panel: var(--bg-panel);
@@ -27,18 +8,62 @@
   --color-blood: var(--blood);
   --color-steel: var(--steel);
   --color-glow: var(--glow);
+  --color-gold: var(--gold);
+  --color-gold-glow: var(--gold-glow);
 }
 
-@layer base {
-  html, body {
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
-  }
+/* 2. Variables CSS (Héritage) */
+:root {
+  --bg-dark: #0f0a0a;
+  --bg-panel: #1a1414;
+  --text-main: #d1d5db;
+  --blood: #991b1b;
+  --steel: #454040;
+  --glow: #ef4444;
+  --gold: #FFD700;
+  --gold-glow: rgba(255, 215, 0, 0.3);
+}
 
+[data-theme='light'] {
+  --bg-dark: #f8fafc;
+  --bg-panel: #e2e8f0;
+  --text-main: #0f172a;
+  --blood: #0284c7;
+  --steel: #94a3b8;
+  --glow: #0ea5e9;
+}
+
+[data-theme='magic'] {
+  --bg-dark: #2e1065;
+  --bg-panel: #4c1d95;
+  --text-main: #ede9fe;
+  --blood: #f472b6;
+  --steel: #c4b5fd;
+  --glow: #f472b6;
+}
+
+@layer utilities {
+  .animate-glow-border {
+    animation: glow-pulse 2s infinite;
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    border-color: var(--steel);
+    box-shadow: 0 0 0px rgba(239, 68, 68, 0);
+  }
+  50% {
+    border-color: var(--glow);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+  }
+}
+/* 4. Base */
+@layer base {
   body {
-    @apply text-text-main transition-colors duration-700;
-    /* On enlève le gradient trop propre, on préfère une base solide et oppressante */
     background-color: var(--bg-dark);
+    color: var(--text-main);
+    transition: background-color 0.5s, color 0.5s;
+    min-height: 100vh;
   }
 }

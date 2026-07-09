@@ -14,7 +14,7 @@ export default async function AdminPage() {
                 include: { players: true }
             }
         },
-        orderBy: { date: 'asc' }
+        orderBy: { date: 'desc' }
     });
 
     return (

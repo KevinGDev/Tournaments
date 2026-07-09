@@ -21,6 +21,8 @@ model Team {
   tournamentId String
   tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   players      Player[]
+  matchesA Match[] @relation("TeamA")
+  matchesB Match[] @relation("TeamB")
 }
 
 model Player {
@@ -34,9 +36,16 @@ model Match {
   id           String     @id @default(uuid())
   tournamentId String
   tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  teamA        String
-  teamB        String
+  teamAId      String?
+  teamA        Team?      @relation("TeamA", fields: [teamAId], references: [id])
+  teamBId      String?
+  teamB        Team?      @relation("TeamB", fields: [teamBId], references: [id])
   scoreA       Int        @default(0)
   scoreB       Int        @default(0)
-  status       String     @default("PENDING") // PENDING, IN_PROGRESS, FINISHED
+  status       String     @default("PENDING")
+  round        Int        @default(1)
+  matchOrder   Int
+  nextMatchId  String?
+  nextMatch    Match?     @relation("NextMatch", fields: [nextMatchId], references: [id])
+  previousMatches Match[] @relation("NextMatch")
 }

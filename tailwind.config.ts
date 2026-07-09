@@ -9,7 +9,6 @@ const config: Config = {
     theme: {
         extend: {
             colors: {
-                // Définition de tes couleurs personnalisées
                 bg: {
                     dark: "var(--bg-dark)",
                     panel: "var(--bg-panel)",
@@ -20,9 +19,12 @@ const config: Config = {
                 blood: "var(--blood)",
                 steel: "var(--steel)",
                 glow: "var(--glow)",
+                gold: 'var(--gold)',
+                'gold-glow': 'var(--gold-glow)',
             },
         },
     },
     plugins: [],
 };
+
 export default config;

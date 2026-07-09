@@ -1,83 +1,135 @@
 import { prisma } from "@/lib/prisma";
-import { Users, Calendar, Trophy } from "lucide-react"; // Ajout de Trophy
+import { Users, Calendar, Trophy } from "lucide-react";
 import { notFound } from "next/navigation";
+import { isAdmin } from "@/lib/auth";
+import { TournamentActions } from "@/components/TournamentActions";
+import { RoundSection } from "@/components/RoundSection";
 
-export default async function TournamentPage({
-                                                 params
-                                             }: {
-    params: Promise<{ id: string }>
-}) {
+export const dynamic = 'force-dynamic';
+
+function getRoundLabel(round: number, totalRounds: number): string {
+    if (round === totalRounds) return "Finale";
+    if (round === totalRounds - 1) return "Demi-finales";
+    if (round === totalRounds - 2) return "Quarts de finale";
+    return `Tour ${round}`;
+}
+
+export default async function TournamentPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-
-    const tournament = await prisma.tournament.findUnique({
-        where: { id: id },
-        include: {
-            teams: { include: { players: true } },
-            matches: true // <--- IMPORTANT : Ajouté pour récupérer les matchs
-        }
-    });
+    const [isUserAdmin, tournament] = await Promise.all([
+        isAdmin(),
+        prisma.tournament.findUnique({
+            where: { id },
+            include: {
+                teams: { include: { players: true } },
+                matches: {
+                    include: { teamA: true, teamB: true },
+                    orderBy: { round: 'desc' }
+                }
+            }
+        })
+    ]);
 
     if (!tournament) notFound();
 
+    const allRounds = Array.from(new Set(tournament.matches.map(m => m.round))).sort((a, b) => b - a);
+    const totalRounds = allRounds.length > 0 ? Math.max(...allRounds) : 0;
+
+    const visibleRounds = allRounds.filter(r => {
+        return tournament.matches.some(m =>
+            m.round === r && (m.teamAId !== null || m.teamBId !== null)
+        );
+    });
+
+    const finaleMatch = tournament.matches.find(m => m.round === totalRounds && m.status === 'FINISHED');
+    const winnerName = finaleMatch
+        ? (finaleMatch.scoreA! > finaleMatch.scoreB! ? finaleMatch.teamA?.name : finaleMatch.teamB?.name)
+        : null;
+
     return (
-        <main className="p-8 max-w-4xl mx-auto">
-            {/* Header */}
-            <h1 className="text-5xl font-black text-text-main mb-2 uppercase italic">{tournament.name}</h1>
-            <div className="flex items-center gap-2 text-steel mb-8">
-                <Calendar className="w-5 h-5" />
-                {new Date(tournament.date).toLocaleDateString('fr-FR', { dateStyle: 'long' })}
-            </div>
+        <main className="p-4 md:p-8 w-full min-h-screen">
+            {isUserAdmin && (
+                <div className="mb-8">
+                    <TournamentActions
+                        tournamentId={tournament.id}
+                        teamCount={tournament.teams.length}
+                    />
+                </div>
+            )}
 
-            {/* Section Équipes */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-                {tournament.teams.map(team => (
-                    <div key={team.id} className="bg-bg-panel/50 p-6 rounded-2xl border border-steel/20">
-                        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                            <Users className="w-5 h-5 text-blood" /> {team.name}
-                        </h2>
-                        <ul className="space-y-2">
-                            {team.players.map(player => (
-                                <li key={player.id} className="text-steel flex items-center gap-2 text-sm">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-blood"></span>
-                                    {player.name}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                ))}
-            </div>
+            <header className="mb-12">
+                <h1 className="text-5xl font-black text-text-main mb-2 uppercase italic tracking-tighter">
+                    {tournament.name}
+                </h1>
+                <div className="flex items-center gap-2 text-steel">
+                    <Calendar className="w-5 h-5" />
+                    {new Date(tournament.date).toLocaleDateString('fr-FR', { dateStyle: 'long' })}
+                </div>
+            </header>
 
-            {/* Section Matchs / Poules */}
-            <section className="border-t border-steel/20 pt-12">
-                <h2 className="text-2xl font-black uppercase text-glow mb-8 flex items-center gap-3">
-                    <Trophy className="w-6 h-6 text-blood" /> État des matchs
+            {tournament.isFinished && winnerName && (
+                <div className="mx-auto max-w-sm flex flex-col items-center justify-center py-12 bg-bg-panel/50 rounded-3xl border border-gold/30 mb-16 animate-in zoom-in duration-500 shadow-2xl shadow-gold-glow">
+                    <Trophy className="w-16 h-16 text-gold mb-4 animate-pulse" />
+                    <h2 className="text-sm font-bold text-steel uppercase tracking-widest">Vainqueur</h2>
+                    <p className="text-3xl font-black text-gold mt-1 drop-shadow-md">{winnerName}</p>
+                </div>
+            )}
+
+            <section className="mb-16">
+                <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-text-main">
+                    <Users className="w-5 h-5" /> Équipes ({tournament.teams.length})
                 </h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {tournament.matches.length > 0 ? (
-                        tournament.matches.map(match => (
-                            <div key={match.id} className="bg-bg-panel p-4 rounded-xl border border-steel/20 flex flex-col items-center">
-                                <div className="flex justify-between w-full font-bold mb-2">
-                                    <span>{match.teamA}</span>
-                                    <span className="text-blood">{match.scoreA}</span>
-                                </div>
-                                <div className="text-steel text-xs uppercase italic">vs</div>
-                                <div className="flex justify-between w-full font-bold mt-2">
-                                    <span>{match.teamB}</span>
-                                    <span className="text-blood">{match.scoreB}</span>
-                                </div>
-                                <div className={`mt-3 text-[10px] uppercase tracking-widest px-2 py-1 rounded ${
-                                    match.status === 'FINISHED' ? 'bg-blood/20 text-blood' : 'bg-steel/10 text-steel'
-                                }`}>
-                                    {match.status}
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <p className="text-steel italic col-span-3 text-center py-8">Aucun match programmé pour le moment.</p>
-                    )}
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+                    {tournament.teams.map(team => (
+                        <div key={team.id} className="bg-bg-panel/50 p-4 rounded-xl border border-steel/20">
+                            <h3 className="font-bold truncate text-sm">{team.name}</h3>
+                        </div>
+                    ))}
                 </div>
             </section>
+
+            <div className="flex gap-12 items-start w-full">
+                <aside className="hidden lg:block w-56 shrink-0">
+                    <nav className="sticky top-8 space-y-2">
+                        <h4 className="text-xs font-bold text-steel uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <Trophy className="w-4 h-4" /> Progression
+                        </h4>
+                        {visibleRounds.map(round => (
+                            <a key={round} href={`#round-${round}`} className="block px-4 py-2 text-sm border-l-2 border-steel/10 hover:border-blood text-steel hover:text-white transition-all hover:bg-steel/5 rounded-r">
+                                {getRoundLabel(round, totalRounds)}
+                            </a>
+                        ))}
+                    </nav>
+                </aside>
+
+                <section className="grow space-y-16 w-full">
+                    {visibleRounds.map(round => {
+                        const activeMatches = tournament.matches
+                            .filter(m => m.round === round && (m.teamAId !== null || m.teamBId !== null))
+                            .sort((a, b) => a.matchOrder - b.matchOrder);
+
+                        if (activeMatches.length === 0) return null;
+
+                        const hasNextRoundStarted = tournament.matches.some(
+                            m => m.round === round + 1 && (m.teamAId !== null || m.teamBId !== null)
+                        );
+
+                        return (
+                            <RoundSection
+                                key={round}
+                                roundId={round}
+                                isLastRound={round === totalRounds}
+                                label={getRoundLabel(round, totalRounds)}
+                                isUserAdmin={isUserAdmin}
+                                matches={activeMatches}
+                                tournamentId={tournament.id}
+                                hasNextRoundStarted={hasNextRoundStarted}
+                                isTournamentFinished={tournament.isFinished}
+                            />
+                        );
+                    })}
+                </section>
+            </div>
         </main>
     );
 }
