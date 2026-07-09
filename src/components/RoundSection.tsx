@@ -74,7 +74,7 @@ export function RoundSection({
                                     scoreA={score?.scoreA ?? 0}
                                     scoreB={score?.scoreB ?? 0}
                                     onScoreChange={(sA, sB) => handleScoreChange(match.id, sA, sB)}
-                                />
+                                    isTournamentFinished={false}                                />
                             );
                         })}
                     </div>

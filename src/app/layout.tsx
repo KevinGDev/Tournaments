@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Tournois LAN",
-  description: "Gestion de tournois LAN",
+  title: "TURBOLAN MASTERX 4000",
+  description: "Pas mal non ? C'est français",
 };
 
 export default function RootLayout({

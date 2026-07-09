@@ -6,10 +6,14 @@ import { useState } from "react";
 interface TournamentActionsProps {
     tournamentId: string;
     teamCount: number;
+    isFinished: boolean; // Ajout de la prop
 }
 
-export function TournamentActions({ tournamentId, teamCount }: TournamentActionsProps) {
+export function TournamentActions({ tournamentId, teamCount, isFinished }: TournamentActionsProps) {
     const [loading, setLoading] = useState(false);
+
+    // Si le tournoi est fini, on n'affiche absolument rien.
+    if (isFinished) return null;
 
     return (
         <div className="flex gap-4">
@@ -21,7 +25,7 @@ export function TournamentActions({ tournamentId, teamCount }: TournamentActions
                         setLoading(false);
                     }}
                     disabled={loading}
-                    className="px-6 py-2 bg-blood text-white font-bold rounded-lg hover:bg-red-700 transition-colors"
+                    className="px-6 py-2 bg-blood text-white font-bold rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
                 >
                     {loading ? "Génération..." : "Générer les poules"}
                 </button>
