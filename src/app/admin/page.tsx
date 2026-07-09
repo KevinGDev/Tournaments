@@ -6,6 +6,7 @@ import AddPlayerForm from "@/components/AddPlayerForm";
 import DeleteButton from "@/components/DeleteButton";
 import { Calendar, Users, Trophy } from "lucide-react";
 import EditTournamentModal from "@/components/EditTournamentModal";
+export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
     const tournaments = await prisma.tournament.findMany({

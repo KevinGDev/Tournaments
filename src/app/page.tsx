@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import HomeView from "@/components/HomeView";
 import { cookies } from 'next/headers';
-
+export const dynamic = 'force-dynamic';
 export default async function Page() {
     const tournaments = await prisma.tournament.findMany();
     const cookieStore = await cookies();
