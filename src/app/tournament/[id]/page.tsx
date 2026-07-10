@@ -94,7 +94,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             {/* ID results ajouté ici pour l'ancre de scroll automatique */}
             {tournament.isFinished && winnerName && boucher && morveux && poissard && (
                 <div id="results" className="flex flex-col gap-8 mb-16 animate-in fade-in slide-in-from-bottom-12 duration-1000">
-                    <div className="mx-auto w-full max-w-lg flex flex-col items-center justify-center py-16 px-8 bg-bg-panel/60 rounded-[2rem] border border-gold/40 shadow-2xl shadow-gold-glow/20 backdrop-blur-sm">
+                    <div className="mx-auto w-full max-w-lg flex flex-col items-center justify-center py-16 px-8 bg-bg-panel/60 rounded-4xl border border-gold/40 shadow-2xl shadow-gold-glow/20 backdrop-blur-sm">
                         <Trophy className="w-24 h-24 text-gold mb-6 animate-pulse" />
                         {/* Le bouton apparaît seulement si c'est fini */}
                         <VictorySound />

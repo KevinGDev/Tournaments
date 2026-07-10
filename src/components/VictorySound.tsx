@@ -1,73 +1,76 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Play, Volume2 } from 'lucide-react'
+import { Zap, Volume2 } from 'lucide-react'
 
 export function VictorySound() {
-    const [hasPlayed, setHasPlayed] = useState(false)
-    const [isPlaying, setIsPlaying] = useState(false)
-    // On utilise une ref pour garder une trace de l'instance audio en cours
+    const [isCelebrating, setIsCelebrating] = useState(false)
     const audioRef = useRef<HTMLAudioElement | null>(null)
-    const playVictory = () => {
-        // Si un son est déjà en train de jouer, on empêche l'action
-        if (isPlaying) return
 
-        const audioFiles = [
-            '/sounds/victory1.mp3',
-            '/sounds/victory2.mp3',
-            '/sounds/victory3.mp3'
-        ];
+    const triggerChaos = () => {
+        if (isCelebrating) return
+        setIsCelebrating(true)
 
-        const randomIndex = Math.floor(Math.random() * audioFiles.length);
-        const audio = new Audio(audioFiles[randomIndex]);
+        // 1. Initialisation de l'audio
+        const audio = new Audio(`/sounds/victory${Math.floor(Math.random() * 3) + 1}.mp3`)
+        audioRef.current = audio
+        audio.volume = 0.8
 
-        audioRef.current = audio;
-        audio.volume = 0.6;
+        // 2. Lancement des effets visuels
+        document.body.classList.add('animate-extreme-shake')
+        const trophy = document.querySelector('#results svg') as HTMLElement
+        if (trophy) {
+            trophy.style.display = 'inline-block'
+            trophy.style.transformOrigin = 'center'
+            trophy.classList.add('animate-grow-giant')
+        }
 
-        // Gestion des états
-        setIsPlaying(true);
-        setHasPlayed(true);
-
-        audio.play().catch(e => {
-            console.error("Erreur lecture son :", e);
-            setIsPlaying(false);
-        });
-
-        // Quand le son se termine, on réactive le bouton
+        // 3. Gestion de la fin de lecture
         audio.onended = () => {
-            setIsPlaying(false);
-        };
-    };
+            document.body.classList.remove('animate-extreme-shake')
+            if (trophy) {
+                trophy.classList.remove('animate-grow-giant')
+                trophy.style.display = ''
+                trophy.style.transform = ''
+            }
+            setIsCelebrating(false)
+        }
+
+        // 4. Lecture
+        audio.play().catch((e) => {
+            console.error(e)
+            setIsCelebrating(false) // Si erreur, on débloque le bouton
+        })
+    }
 
     return (
-        <div className="my-8">
+        <div className="my-12 flex flex-col items-center">
+            {isCelebrating && (
+                <div className="fixed inset-0 z-9999 pointer-events-none animate-color-glitch mix-blend-multiply" />
+            )}
+
             <button
-                onClick={playVictory}
-                // On désactive visuellement le bouton si isPlaying est vrai
-                disabled={isPlaying}
+                onClick={triggerChaos}
+                disabled={isCelebrating}
                 className={`
-                    relative flex items-center gap-3 px-8 py-4 
-                    bg-gold text-black font-black uppercase tracking-[0.2em] 
+                    relative z-10000 flex items-center gap-4 px-12 py-6 
+                    bg-gold text-black font-black uppercase text-xl
                     rounded-full transition-all duration-300
-                    hover:scale-105 hover:shadow-[0_0_40px_rgba(212,175,55,0.6)]
-                    ${hasPlayed ? 'opacity-70 scale-95' : 'animate-bounce shadow-[0_0_20px_rgba(212,175,55,0.4)]'}
-                    ${isPlaying ? 'cursor-not-allowed opacity-50' : ''}
+                    ${isCelebrating
+                    ? 'opacity-30 cursor-not-allowed grayscale'
+                    : 'hover:scale-110 hover:shadow-[0_0_60px_rgba(255,215,0,0.6)] animate-bounce active:scale-95'}
                 `}
             >
-                {isPlaying ? (
+                {isCelebrating ? (
                     <>
-                        <Volume2 className="w-5 h-5 animate-pulse" />
-                        <span>CARNAGE EN COURS...</span>
+                        <Volume2 className="w-8 h-8 animate-spin" />
+                        <span>MASSACRE EN COURS...</span>
                     </>
                 ) : (
                     <>
-                        <Play className="w-5 h-5 fill-black" />
-                        <span>{hasPlayed ? 'RE-CELEBRER LE MASSACRE' : 'CELEBRER LE MASSACRE'}</span>
+                        <Zap className="w-8 h-8" />
+                        <span>CELEBRER LE CARNAGE</span>
                     </>
-                )}
-
-                {!hasPlayed && !isPlaying && (
-                    <span className="absolute -inset-1 rounded-full border-2 border-gold/30 animate-ping" />
                 )}
             </button>
         </div>
