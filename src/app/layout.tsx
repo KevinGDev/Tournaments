@@ -32,7 +32,10 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
           suppressHydrationWarning
       >
-      <body className="min-h-full flex flex-col bg-bg-main text-text-main transition-colors duration-300">
+      <body
+          className="min-h-full flex flex-col bg-bg-main text-text-main transition-colors duration-300"
+          suppressHydrationWarning // Ajoutez-le ici aussi
+      >
       <header className="sticky top-0 w-full p-4 border-b border-steel/20 bg-bg-panel/80 backdrop-blur-sm flex items-center justify-between z-40">
           <Link href="/" className="text-2xl font-black tracking-tighter text-blood flex items-center gap-2">
               <span>🎮</span>
