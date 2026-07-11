@@ -2,7 +2,6 @@
 
 /* 1. Configuration des variables CSS par attribut data-theme */
 :root {
-  /* THÈME DARK (Par défaut si aucun data-theme ou data-theme='dark') */
   --bg-dark: #0f0a0a;
   --bg-panel: #1a1414;
   --text-main: #d1d5db;
@@ -48,6 +47,7 @@
 
   --animate-extreme-shake: extreme-shake 0.1s infinite;
   --animate-grow-giant: grow-giant 3s ease-out forwards;
+  --animate-bro-glow: bro-glow 1s infinite alternate;
 }
 
 /* 3. Keyframes */
@@ -65,6 +65,18 @@
 @keyframes glow-pulse {
   0%, 100% { border-color: var(--steel); box-shadow: 0 0 0 rgba(239, 68, 68, 0); }
   50% { border-color: var(--glow); box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+}
+@keyframes bro-glow {
+  0%, 100% {
+    box-shadow: 0 0 40px 5px var(--gold), inset 0 0 20px rgba(0,0,0,0.3);
+    filter: brightness(1);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 80px 20px var(--gold), inset 0 0 40px rgba(255,255,255,0.2);
+    filter: brightness(1.4);
+    transform: scale(1.02); /* Petit effet de zoom sur la carte */
+  }
 }
 
 /* 4. Utilitaires */

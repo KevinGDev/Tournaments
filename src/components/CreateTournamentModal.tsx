@@ -5,13 +5,10 @@ import { createTournament } from "@/app/actions";
 export default function CreateTournamentModal() {
     const [isOpen, setIsOpen] = useState(false);
 
-    // Fonction pour formater la date actuelle au format attendu par datetime-local
     const getNowISO = () => {
         const now = new Date();
-        // Décalage pour le fuseau horaire local (ex: UTC+2 en France en été)
-        const offset = now.getTimezoneOffset() * 60000;
-        const localISOTime = (new Date(now.getTime() - offset)).toISOString().slice(0, 16);
-        return localISOTime;
+        // On retire juste les millisecondes et on prend la chaîne locale formatée
+        return new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
     };
 
     return (
@@ -32,7 +29,6 @@ export default function CreateTournamentModal() {
                         >
                             <input name="name" placeholder="Nom" className="w-full p-3 bg-bg-dark border border-steel/30 rounded text-text-main" required />
 
-                            {/* On injecte la valeur par défaut ici */}
                             <input
                                 type="datetime-local"
                                 name="date"

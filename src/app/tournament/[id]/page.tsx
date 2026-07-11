@@ -1,12 +1,13 @@
 import { prisma } from "@/lib/prisma";
-import { Users, Calendar, Trophy, Skull, Target, Zap, Meh } from "lucide-react";
+import { Users, Calendar, Zap, Trophy, Skull, Target, Meh } from "lucide-react";
 import { notFound } from "next/navigation";
 import { isAdmin } from "@/lib/auth";
 import { TournamentActions } from "@/components/TournamentActions";
 import { RoundSection } from "@/components/RoundSection";
 import { WinnerConfetti } from "@/components/WinnerConfetti";
-import {getChampionTrashTalk} from "@/lib/trashtalk";
-import {VictorySound} from "@/components/VictorySound";
+import { RegisterModal } from "@/components/RegisterModal";
+import { VictorySound } from "@/components/VictorySound";
+import { getChampionTrashTalk } from "@/lib/trashtalk";
 
 export const dynamic = 'force-dynamic';
 
@@ -25,23 +26,26 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             where: { id },
             include: {
                 teams: { include: { players: true } },
-                matches: {
-                    include: { teamA: true, teamB: true },
-                    orderBy: { round: 'desc' }
-                }
+                matches: { include: { teamA: true, teamB: true }, orderBy: { round: 'desc' } }
             }
         })
     ]);
 
     if (!tournament) notFound();
 
+    const hasMatches = tournament.matches.length > 0;
+    const allRounds = Array.from(new Set(tournament.matches.map(m => m.round))).sort((a, b) => b - a);
+    const totalRounds = allRounds.length > 0 ? Math.max(...allRounds) : 0;
+    const visibleRounds = allRounds.filter(r => tournament.matches.some(m => m.round === r && (m.teamAId !== null || m.teamBId !== null)));
+
+    // Calcul des statistiques
     let boucher = null, morveux = null, poissard = null;
+    let winnerName = null;
 
     if (tournament.isFinished) {
-        const finishedMatches = tournament.matches.filter(m => m.status === 'FINISHED');
+        const finishedMatches = tournament.matches.filter(m => m.status === 'FINISHED' && m.scoreA !== null && m.scoreB !== null);
         const teamStats = tournament.teams.map(team => {
-            let totalDelta = 0;
-            let totalPoints = 0;
+            let totalDelta = 0, totalPoints = 0;
             finishedMatches.forEach(m => {
                 if (m.teamAId === team.id) {
                     totalDelta += (m.scoreA! - m.scoreB!);
@@ -59,89 +63,77 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             morveux = [...teamStats].sort((a, b) => a.totalPoints - b.totalPoints)[0];
             poissard = [...teamStats].sort((a, b) => a.totalDelta - b.totalDelta)[0];
         }
+
+        const finale = tournament.matches.find(m => m.round === totalRounds && m.status === 'FINISHED');
+        if (finale && finale.scoreA !== null && finale.scoreB !== null) {
+            winnerName = finale.scoreA > finale.scoreB ? finale.teamA?.name : finale.teamB?.name;
+        }
     }
-
-    const allRounds = Array.from(new Set(tournament.matches.map(m => m.round))).sort((a, b) => b - a);
-    const totalRounds = allRounds.length > 0 ? Math.max(...allRounds) : 0;
-    const visibleRounds = allRounds.filter(r => tournament.matches.some(m => m.round === r && (m.teamAId !== null || m.teamBId !== null)));
-
-    const finaleMatch = tournament.matches.find(m => m.round === totalRounds && m.status === 'FINISHED');
-    const winnerName = finaleMatch ? (finaleMatch.scoreA! > finaleMatch.scoreB! ? finaleMatch.teamA?.name : finaleMatch.teamB?.name) : null;
 
     return (
         <main className="p-4 md:p-8 w-full min-h-screen relative">
-            {tournament.isFinished && (
-                <>
-                    <WinnerConfetti />
+            {tournament.isFinished && <WinnerConfetti />}
 
-                </>
-            )}
-            {isUserAdmin && (
-                <div className="mb-8">
-                    <TournamentActions
-                        tournamentId={tournament.id}
-                        teamCount={tournament.teams.length}
-                        isFinished={tournament.isFinished}
-                    />
-                </div>
-            )}
+            <div className="mb-8 flex flex-wrap items-center gap-4">
+                {isUserAdmin && (
+                    <TournamentActions tournamentId={tournament.id} teamCount={tournament.teams.length} isFinished={tournament.isFinished} />
+                )}
+                {!tournament.isFinished && !hasMatches && <RegisterModal tournamentId={tournament.id} />}
+            </div>
 
             <header className="mb-12">
                 <h1 className="text-5xl font-black text-text-main mb-2 uppercase italic tracking-tighter">{tournament.name}</h1>
-                <div className="flex items-center gap-2 text-steel"><Calendar className="w-5 h-5" />{new Date(tournament.date).toLocaleDateString('fr-FR', { dateStyle: 'long' })}</div>
+                <div className="flex items-center gap-2 text-steel">
+                    <Calendar className="w-5 h-5" />
+                    {new Date(tournament.date).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'UTC' })}
+                </div>
             </header>
 
-            {/* ID results ajouté ici pour l'ancre de scroll automatique */}
-            {tournament.isFinished && winnerName && boucher && morveux && poissard && (
-                <div id="results" className="flex flex-col gap-8 mb-16 animate-in fade-in slide-in-from-bottom-12 duration-1000">
-                    <div className="mx-auto w-full max-w-lg flex flex-col items-center justify-center py-16 px-8 bg-bg-panel/60 rounded-4xl border border-gold/40 shadow-2xl shadow-gold-glow/20 backdrop-blur-sm">
-                        <Trophy className="w-24 h-24 text-gold mb-6 animate-pulse" />
-                        {/* Le bouton apparaît seulement si c'est fini */}
+            {tournament.isFinished && winnerName && (
+                <div className="mb-16 flex flex-col items-center gap-8 px-4">
+                    <div
+                        id="results-card"
+                        className="w-full max-w-2xl text-center p-12 md:p-16 bg-bg-panel/60 rounded-4xl border border-gold/40 transition-all duration-500"
+                    >
+                        <Trophy className="w-24 h-24 text-gold mx-auto mb-6 animate-pulse" />
                         <VictorySound />
-                        <h2 className="text-xs font-bold text-steel uppercase tracking-[0.2em]">Grand Champion</h2>
-                        <p className="text-5xl font-black text-gold mt-2 uppercase tracking-tighter drop-shadow-lg">{winnerName}</p>
-                        <p className="mt-4 text-xs font-bold text-gold/60 italic uppercase tracking-wider">
-                            &#34;{getChampionTrashTalk()}&#34;
-                            {/* Le bouton apparaît seulement si c'est fini */}
-                        </p>
-
-                        <div className="mt-6 w-16 h-1 bg-gold/50 rounded-full" />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto w-full">
-                        <div className="bg-bg-panel/50 p-6 rounded-2xl border border-blood/50 flex items-center gap-4">
-                            <Target className="w-10 h-10 text-blood" />
-                            <div>
-                                <h4 className="text-[10px] font-bold text-blood uppercase tracking-wider">Le Boucher</h4>
-                                <p className="text-sm font-bold text-white">{boucher.name}</p>
-                                <p className="text-[10px] text-steel">+{boucher.totalDelta} pts d&#39;écart</p>
-                            </div>
-                        </div>
-                        <div className="bg-bg-panel/50 p-6 rounded-2xl border-2 border-steel/20 flex items-center gap-4">
-                            <Skull className="w-10 h-10 text-steel" />
-                            <div>
-                                <h4 className="text-[10px] font-bold text-steel uppercase tracking-wider">Le Morveux</h4>
-                                <p className="text-sm font-bold text-white">{morveux.name}</p>
-                                <p className="text-[10px] text-steel">{morveux.totalPoints} pts marqués</p>
-                            </div>
-                        </div>
-                        <div className="bg-bg-panel/50 p-6 rounded-2xl border border-purple-500/30 flex items-center gap-4">
-                            <Meh className="w-10 h-10 text-purple-500" />
-                            <div>
-                                <h4 className="text-[10px] font-bold text-purple-500 uppercase tracking-wider">Le Poissard</h4>
-                                <p className="text-sm font-bold text-white">{poissard.name}</p>
-                                <p className="text-[10px] text-steel">{poissard.totalDelta} pts de karma</p>
-                            </div>
-                        </div>
+                        <h2 className="text-lg text-steel uppercase tracking-widest mt-8">Grand Champion</h2>
+                        <p className="text-6xl font-black text-gold mt-2">{winnerName}</p>
+                        <p className="mt-6 italic text-gold/60 text-xl">"{getChampionTrashTalk()}"</p>
                     </div>
                 </div>
+            )}
+
+            {tournament.isFinished && boucher && morveux && poissard && (
+                <section className="mb-16 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-bg-panel/50 p-6 rounded-2xl border border-red-500/20 text-center">
+                        <Skull className="w-8 h-8 text-red-500 mx-auto mb-2" />
+                        <h3 className="text-red-500 font-bold uppercase text-sm">Le Boucher</h3>
+                        <p className="text-xl font-bold mt-1">{boucher.name}</p>
+                        <p className="text-xs text-steel">Différence : +{boucher.totalDelta}</p>
+                    </div>
+                    <div className="bg-bg-panel/50 p-6 rounded-2xl border border-blue-500/20 text-center">
+                        <Meh className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                        <h3 className="text-blue-500 font-bold uppercase text-sm">Le Morveux</h3>
+                        <p className="text-xl font-bold mt-1">{morveux.name}</p>
+                        <p className="text-xs text-steel">Points : {morveux.totalPoints}</p>
+                    </div>
+                    <div className="bg-bg-panel/50 p-6 rounded-2xl border border-purple-500/20 text-center">
+                        <Target className="w-8 h-8 text-purple-500 mx-auto mb-2" />
+                        <h3 className="text-purple-500 font-bold uppercase text-sm">Le Poissard</h3>
+                        <p className="text-xl font-bold mt-1">{poissard.name}</p>
+                        <p className="text-xs text-steel">Différence : {poissard.totalDelta}</p>
+                    </div>
+                </section>
             )}
 
             <section className="mb-16">
                 <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-text-main"><Users className="w-5 h-5" /> Équipes ({tournament.teams.length})</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
                     {tournament.teams.map(team => (
-                        <div key={team.id} className="bg-bg-panel/50 p-4 rounded-xl border border-steel/20"><h3 className="font-bold truncate text-sm">{team.name}</h3></div>
+                        <div key={team.id} className="bg-bg-panel/50 p-4 rounded-xl border border-steel/20 text-center">
+                            <h3 className="font-bold text-sm truncate">{team.name}</h3>
+                        </div>
                     ))}
                 </div>
             </section>
@@ -151,18 +143,33 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                     <nav className="sticky top-8 space-y-2">
                         <h4 className="text-xs font-bold text-steel uppercase tracking-widest mb-4 flex items-center gap-2"><Zap className="w-4 h-4" /> Progression</h4>
                         {visibleRounds.map(round => (
-                            <a key={round} href={`#round-${round}`} className="block px-4 py-2 text-sm border-l-2 border-steel/10 hover:border-blood text-steel hover:text-white transition-all hover:bg-steel/5 rounded-r">{getRoundLabel(round, totalRounds)}</a>
+                            <a key={round} href={`#round-${round}`} className="block px-4 py-2 text-sm border-l-2 border-steel/10 hover:border-blood text-steel hover:text-white transition-all hover:bg-steel/5 rounded-r">
+                                {getRoundLabel(round, totalRounds)}
+                            </a>
                         ))}
                     </nav>
                 </aside>
 
                 <section className="grow space-y-16 w-full">
                     {visibleRounds.map(round => {
-                        const activeMatches = tournament.matches.filter(m => m.round === round && (m.teamAId !== null || m.teamBId !== null)).sort((a, b) => a.matchOrder - b.matchOrder);
+                        const activeMatches = tournament.matches
+                            .filter(m => m.round === round && (m.teamAId !== null || m.teamBId !== null))
+                            .sort((a, b) => (a.matchOrder || 0) - (b.matchOrder || 0));
+
                         if (activeMatches.length === 0) return null;
-                        const hasNextRoundStarted = tournament.matches.some(m => m.round === round + 1 && (m.teamAId !== null || m.teamBId !== null));
+
                         return (
-                            <RoundSection key={round} roundId={round} isLastRound={round === totalRounds} label={getRoundLabel(round, totalRounds)} isUserAdmin={isUserAdmin} matches={activeMatches} tournamentId={tournament.id} hasNextRoundStarted={hasNextRoundStarted} isTournamentFinished={tournament.isFinished} />
+                            <RoundSection
+                                key={round}
+                                roundId={round}
+                                isLastRound={round === totalRounds}
+                                label={getRoundLabel(round, totalRounds)}
+                                isUserAdmin={isUserAdmin}
+                                matches={activeMatches}
+                                tournamentId={tournament.id}
+                                hasNextRoundStarted={tournament.matches.some(m => m.round === round + 1 && (m.teamAId !== null || m.teamBId !== null))}
+                                isTournamentFinished={tournament.isFinished}
+                            />
                         );
                     })}
                 </section>

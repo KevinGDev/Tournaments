@@ -46,7 +46,11 @@ export default async function AdminPage() {
                                     <h3 className="text-2xl font-bold uppercase tracking-widest text-text-main mb-2">{t.name}</h3>
                                     <div className="flex items-center gap-2 text-steel text-sm">
                                         <Calendar className="w-4 h-4" />
-                                        {t.date ? new Date(t.date).toLocaleDateString('fr-FR', { dateStyle: 'long' }) : "Date non définie"}
+                                        {t.date ? new Date(t.date).toLocaleString('fr-FR', {
+                                            dateStyle: 'long',
+                                            timeStyle: 'short',
+                                            timeZone: 'UTC' // Force l'affichage en UTC
+                                        }) : "Date non définie"}
                                     </div>
                                 </div>
 

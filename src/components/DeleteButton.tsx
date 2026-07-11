@@ -1,7 +1,6 @@
 'use client'
 
 import { deleteTournament } from "@/app/actions";
-import { Trash2 } from "lucide-react";
 
 export default function DeleteButton({ id }: { id: string }) {
     return (

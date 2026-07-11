@@ -69,9 +69,22 @@ export async function createTournament(formData: FormData) {
     if (!cookieStore.get('admin_token')) throw new Error("Non autorisé");
 
     const name = formData.get("name") as string;
-    const date = new Date(formData.get("date") as string);
+    const dateInput = formData.get("date") as string; // ex: "2026-07-11T11:34"
 
-    await prisma.tournament.create({ data: { name, date } });
+    // 1. On crée la date à partir de la chaîne locale
+    const localDate = new Date(dateInput);
+
+    // 2. On corrige le décalage pour forcer Prisma à stocker l'heure "murale" exacte
+    // On ajoute le décalage du fuseau horaire pour compenser la conversion UTC automatique
+    const utcDate = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
+
+    await prisma.tournament.create({
+        data: {
+            name,
+            date: utcDate
+        }
+    });
+
     revalidatePath("/admin");
     revalidatePath("/");
 }
@@ -142,11 +155,6 @@ export async function generateBracketAction(tournamentId: string) {
     return { success: true };
 }
 
-export async function regenerateTournamentBrackets(tournamentId: string) {
-    await prisma.match.deleteMany({ where: { tournamentId } });
-    await buildTournamentTree(tournamentId);
-    revalidatePath(`/tournaments/${tournamentId}`);
-}
 export async function completeRoundAction(
     tournamentId: string,
     roundId: number,
@@ -202,4 +210,24 @@ export async function completeRoundAction(
     }
 
     revalidatePath(`/tournament/${tournamentId}`);
+}
+
+export async function registerTeamAction(formData: FormData) {
+    const tournamentId = formData.get("tournamentId") as string;
+    const teamName = formData.get("teamName") as string;
+    const players = (formData.get("players") as string).split(',').map(p => p.trim()).filter(p => p !== "");
+
+    if (!teamName || players.length === 0) throw new Error("Nom d'équipe et joueurs requis");
+
+    await prisma.team.create({
+        data: {
+            name: teamName,
+            tournamentId,
+            players: {
+                create: players.map(name => ({ name }))
+            }
+        }
+    });
+
+    revalidatePath(`/tournaments/${tournamentId}`);
 }

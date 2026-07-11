@@ -23,11 +23,10 @@ export default function TournamentCard({ id, name, date, isFinished, featured }:
 
                 <p className="text-lg text-steel font-medium mb-6">
                     {date.toLocaleDateString('fr-FR', {
-                        weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+                        weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' // Force l'affichage en UTC
                     }).replace(/^\w/, (c) => c.toUpperCase())}
                 </p>
 
-                {/* La logique est déléguée au composant Countdown */}
                 <Countdown date={date} isFinished={isFinished} tournamentId={id} />
 
             </div>
