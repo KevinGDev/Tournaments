@@ -13,6 +13,8 @@ model Tournament {
   isFinished Boolean  @default(false)
   teams     Team[]
   matches   Match[]
+    isFFA Boolean @default(false)
+    winnerId    String?
 }
 
 model Team {

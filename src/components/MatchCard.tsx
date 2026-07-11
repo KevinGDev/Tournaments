@@ -6,24 +6,26 @@ import { useEffect, useState } from "react";
 
 type MatchWithTeams = Prisma.MatchGetPayload<{ include: { teamA: true, teamB: true } }>;
 
+interface MatchCardProps {
+    match: MatchWithTeams;
+    isUserAdmin: boolean;
+    isTournamentFinished: boolean;
+    // Props rendues optionnelles pour le mode FFA
+    onScoreChange?: (a: number, b: number) => void;
+    isLocked?: boolean;
+    scoreA?: number;
+    scoreB?: number;
+}
+
 export function MatchCard({
                               match,
                               isUserAdmin,
                               onScoreChange,
-                              isLocked,
-                              scoreA,
-                              scoreB,
+                              isLocked = false,
+                              scoreA = 0,
+                              scoreB = 0,
                               isTournamentFinished
-                          }: {
-    match: MatchWithTeams,
-    isUserAdmin: boolean,
-    onScoreChange: (a: number, b: number) => void,
-    isLocked: boolean,
-    scoreA: number,
-    scoreB: number,
-    isTournamentFinished: boolean
-}) {
-    // État pour le trashTalk : null au départ pour éviter l'erreur d'hydratation
+                          }: MatchCardProps) {
     const [trashTalk, setTrashTalk] = useState<string | null>(null);
 
     const hasTeamA = match.teamAId !== null;
@@ -34,7 +36,6 @@ export function MatchCard({
 
     useEffect(() => {
         if (isFinished && isComplete) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setTrashTalk(getTrashTalk(scoreA, scoreB));
         }
     }, [isFinished, isComplete, scoreA, scoreB]);
@@ -52,7 +53,6 @@ export function MatchCard({
                 </div>
             </div>
 
-            {/* Affichage du Trash Talk uniquement après montage client */}
             {trashTalk && (
                 <div className="text-center">
                     <p className="text-[10px] text-gold uppercase tracking-widest font-bold italic animate-pulse">
@@ -61,7 +61,8 @@ export function MatchCard({
                 </div>
             )}
 
-            {isUserAdmin && (
+            {/* Vérification que onScoreChange est défini avant d'afficher les inputs */}
+            {isUserAdmin && onScoreChange && (
                 <div className="flex gap-2">
                     <input
                         type="number"

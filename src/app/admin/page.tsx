@@ -16,7 +16,7 @@ export default async function AdminPage() {
                 include: { players: true }
             }
         },
-        orderBy: { date: 'desc' }
+        orderBy: { date: 'asc' }
     });
 
     return (
@@ -49,7 +49,7 @@ export default async function AdminPage() {
                                         {t.date ? new Date(t.date).toLocaleString('fr-FR', {
                                             dateStyle: 'long',
                                             timeStyle: 'short',
-                                            timeZone: 'UTC' // Force l'affichage en UTC
+                                            timeZone: 'UTC'
                                         }) : "Date non définie"}
                                     </div>
                                 </div>
