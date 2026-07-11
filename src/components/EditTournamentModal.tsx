@@ -5,8 +5,10 @@ import { Edit, Save, X } from "lucide-react"; // Import des icônes
 
 export default function EditTournamentModal({ tournament }: { tournament: any }) {
     const [isOpen, setIsOpen] = useState(false);
-    const formattedDate = new Date(tournament.date).toISOString().slice(0, 16);
-
+    const dateObj = new Date(tournament.date);
+    const formattedDate = new Date(dateObj.getTime() - (dateObj.getTimezoneOffset() * 60000))
+        .toISOString()
+        .slice(0, 16);
     return (
         <>
             <button

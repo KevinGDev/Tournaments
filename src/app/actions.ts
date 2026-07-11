@@ -96,14 +96,29 @@ export async function deleteTournament(formData: FormData) {
 }
 
 export async function updateTournament(formData: FormData) {
+    const cookieStore = await cookies();
+    if (!cookieStore.get('admin_token')) throw new Error("Non autorisé");
+
     const id = formData.get("id") as string;
     const name = formData.get("name") as string;
-    const date = new Date(formData.get("date") as string);
+    const dateInput = formData.get("date") as string;
+
+    // 1. On crée une date à partir de la chaîne saisie dans le formulaire (heure locale)
+    const localDate = new Date(dateInput);
+
+    // 2. On ajuste manuellement pour compenser le fuseau horaire
+    // afin que Prisma enregistre exactement l'heure saisie.
+    const dateToStore = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
 
     await prisma.tournament.update({
         where: { id },
-        data: { name, date },
+        data: {
+            name,
+            date: dateToStore
+        },
     });
+
+    revalidatePath("/admin");
     revalidatePath("/");
 }
 
