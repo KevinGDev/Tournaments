@@ -84,11 +84,13 @@ export async function updateTournament(formData: FormData) {
 
     const id = formData.get("id") as string;
     const name = formData.get("name") as string;
-    const dateInput = formData.get("date") as string;
+    const dateInput = formData.get("date") as string; // Reçoit "2026-07-11T15:30"
     const isFFA = formData.get("isFFA") === "on";
 
-    const localDate = new Date(dateInput);
-    const dateToStore = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
+    // CORRECTION : En ajoutant ":00.000Z", vous dites à JS que
+    // l'heure saisie est déjà en UTC.
+    // Cela supprime toute interprétation de fuseau horaire local.
+    const dateToStore = new Date(`${dateInput}:00.000Z`);
 
     await prisma.tournament.update({
         where: { id },

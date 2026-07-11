@@ -10,26 +10,31 @@ interface CountdownProps {
 }
 
 export default function Countdown({ date, isFinished, tournamentId }: CountdownProps) {
-    const [currentTime, setCurrentTime] = useState(new Date());
+    // On normalise la date reçue en ajoutant le décalage local pour compenser le stockage en "heure locale"
+    const offset = new Date().getTimezoneOffset() * 60000;
+    const targetTimestamp = date.getTime() + offset;
+
+    const [currentTime, setCurrentTime] = useState(Date.now());
     const [hasTriggered, setHasTriggered] = useState(false);
 
     useEffect(() => {
         if (isFinished) return;
 
         const interval = setInterval(async () => {
-            const now = new Date();
+            const now = Date.now();
             setCurrentTime(now);
 
-            if (date.getTime() - now.getTime() <= 0 && !hasTriggered) {
+            // Comparaison avec le timestamp normalisé
+            if (targetTimestamp - now <= 0 && !hasTriggered) {
                 setHasTriggered(true);
                 await generateBracketAction(tournamentId);
             }
         }, 50);
 
         return () => clearInterval(interval);
-    }, [date, isFinished, tournamentId, hasTriggered]);
+    }, [targetTimestamp, isFinished, tournamentId, hasTriggered]);
 
-    const diff = date.getTime() - currentTime.getTime();
+    const diff = targetTimestamp - currentTime;
 
     const getDisplayText = () => {
         if (isFinished) return "TERMINÉ";
@@ -44,7 +49,6 @@ export default function Countdown({ date, isFinished, tournamentId }: CountdownP
         const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
         const displayStr = d > 0 ? `${d}j ${timeStr}` : timeStr;
 
-        // Ajout des millisecondes uniquement si moins d'une minute
         if (d === 0 && h === 0 && m === 0) {
             return `${displayStr}.${String(ms).padStart(2, '0')}`;
         }
@@ -57,14 +61,9 @@ export default function Countdown({ date, isFinished, tournamentId }: CountdownP
     const getStyle = () => {
         if (isFinished || displayText === "TERMINÉ") return "text-gray-500 border-gray-500/30";
         if (displayText === "EN COURS") return "text-green-500 border-green-500/30 animate-pulse";
-
-        // Si moins d'une heure (et pas terminé), rouge clignotant
-        // On vérifie si la chaîne ne contient pas 'j' (jours) et commence par '00:' (heures)
         if (!displayText.includes('j') && displayText.startsWith("00:")) {
             return "text-red-500 animate-pulse border-red-500/50";
         }
-
-        // Par défaut, couleur neutre
         return "text-steel border-steel/30";
     };
 
